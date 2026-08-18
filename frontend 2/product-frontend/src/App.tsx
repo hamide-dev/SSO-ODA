@@ -1,4 +1,5 @@
 // App.tsx
+import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 
 const PRODUCTS = [
@@ -11,14 +12,26 @@ const PRODUCTS = [
 function App() {
   const auth = useAuth();
 
-  if (auth.isLoading) return <p>Chargement...</p>;
+  useEffect(() => {
+    if (!auth.isLoading && !auth.isAuthenticated && !auth.activeNavigator) {
+      auth.signinRedirect();
+    }
+  }, [auth.isLoading, auth.isAuthenticated, auth.activeNavigator, auth]);
+
+  if (auth.isLoading || auth.activeNavigator) {
+    return <p>Chargement...</p>;
+  }
 
   if (!auth.isAuthenticated) {
-    return <button onClick={() => auth.signinRedirect()}>Se connecter</button>;
+    return (
+      <div className="container">
+        <button onClick={() => auth.signinRedirect()}>Se connecter</button>
+      </div>
+    );
   }
 
   return (
-    <div>
+    <div className="container">
       <h1>Catalogue produits</h1>
       <p>Bonjour {auth.user?.profile.preferred_username}</p>
       <ul>

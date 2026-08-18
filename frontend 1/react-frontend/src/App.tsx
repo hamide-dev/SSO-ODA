@@ -1,33 +1,31 @@
-// App.tsx
-import { useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
-
-const API_URL = "http://localhost:4000/api/protected";
 
 function App() {
   const auth = useAuth();
-  const [apiResult, setApiResult] = useState<string | null>(null);
 
-  if (auth.isLoading) return <p>Chargement...</p>;
+  useEffect(() => {
+    if (!auth.isLoading && !auth.isAuthenticated && !auth.activeNavigator) {
+      auth.signinRedirect();
+    }
+  }, [auth.isLoading, auth.isAuthenticated, auth.activeNavigator, auth]);
 
-  if (!auth.isAuthenticated) {
-    return <button onClick={() => auth.signinRedirect()}>Se connecter</button>;
+  if (auth.isLoading || auth.activeNavigator) {
+    return <p>Chargement...</p>;
   }
 
-  const callBackend = async () => {
-    const res = await fetch(API_URL, {
-      headers: { Authorization: `Bearer ${auth.user?.access_token}` },
-    });
-    const data = await res.json();
-    setApiResult(JSON.stringify(data));
-  };
+  if (!auth.isAuthenticated) {
+    return (
+      <div className="container">
+        <button onClick={() => auth.signinRedirect()}>Se connecter</button>
+      </div>
+    );
+  }
 
   return (
-    <div>
+    <div className="container">
       <h1>Bienvenue sur l'application React avec ODA interface utilisateur</h1>
       <p>Bonjour {auth.user?.profile.preferred_username}</p>
-      <button onClick={callBackend}>Appeler le backend protégé</button>
-      {apiResult && <p>Réponse backend : {apiResult}</p>}
       <button onClick={() => auth.signoutRedirect()}>Se déconnecter</button>
     </div>
   );
